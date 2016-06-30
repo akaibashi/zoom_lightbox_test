@@ -1,0 +1,344 @@
+<html>
+  <head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <!--    <script src="./zoom_lightbox.js"></script> -->
+
+
+
+<style>
+
+#lightbox {
+  position : fixed;
+  background : blue;
+  /*width : 100px;
+  height : 100px;*/
+  display : none;
+  /*opacity : 0;*/
+  z-index: 2;
+}
+
+
+
+#lightbox_background {
+  position : fixed;
+  width : 100%;
+  height : 100%;
+  left : 0;
+  top : 0;
+  background-color : #444;
+  opacity : 0;
+  filter: progid:DXImageTransform.Microsoft.Alpha(enabled=1, style=0, opacity=50);
+  display : none;
+  z-index : 1;
+}
+
+
+
+.content {
+  float : left;
+  background : red;
+  width : 100px;
+  height : 100px;
+  margin : 20px;
+}
+
+.content2 {
+  float : left;
+  background : red;
+  width : 300px;
+  height : 100px;
+  margin : 20px;
+}
+
+
+</style>
+
+<script>
+$(function(){
+
+  var addCSS = (function() {
+    var style = document.createElement('style');
+    style.setAttribute('type', 'text/css');
+    document.getElementsByTagName('head')[0].appendChild(style);
+    var sheet = document.styleSheets[0];
+    if (sheet.insertRule) {
+      return function(selector, property, value) {
+        sheet.insertRule(selector + '{' + property + ':' + value + ';}', sheet.cssRules.length);
+      };
+    } else {
+      return function(selector, property, value) {
+        sheet.addRule(selector, property + ':' + value);
+      };
+    }
+  })();
+
+  var scrollBarWidth = (function() {
+    var scrollDiv = document.createElement("div");
+    scrollDiv.style.width = '100px';
+    scrollDiv.style.height = '100px';
+    scrollDiv.style.overflow = 'scroll';
+    scrollDiv.style.position = 'absolute';
+    scrollDiv.style.top = '-9999px';
+    document.body.appendChild(scrollDiv);
+
+    var w = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+
+    document.body.removeChild(scrollDiv);
+
+    return w;
+  })();
+
+  addCSS('.noscroll', 'position', 'relative');
+  addCSS('.noscroll', 'overflow', 'hidden');
+  addCSS('.noscroll', 'padding-right', scrollBarWidth + 'px');
+  addCSS('.noscroll #lightbox-position-adjuster', 'padding-right', scrollBarWidth + 'px');
+
+  var beginScrollBlock = function() {
+    $('body').addClass('noscroll');
+  };
+  var endScrollBlock = function() {
+    $('body').removeClass('noscroll');
+  };
+
+
+
+
+
+
+  $(".content").click(function(){
+    openlightbox($(this));
+
+    // 画面のスクロール抑制
+    beginScrollBlock();
+
+  });
+
+  $(".content2").click(function(){
+    openlightbox($(this));
+
+    // 画面のスクロール抑制
+    beginScrollBlock();
+
+  });
+
+  // light box開く
+  function openlightbox($this){
+
+    var pos = $this.offset();
+    // 要素のポジションからスクロール量を減算して現在の要素の位置を取得
+    var pos_top = pos.top - $(window).scrollTop();
+    var pos_left = pos.left - $(window).scrollLeft();
+    
+    var width = $this.width();
+    var height = $this.height();
+
+    
+console.log($(window).scrollTop());
+console.log($(window).scrollLeft());
+
+    // dom構築
+    var lightbox = $("#lightbox");
+    var lightbox_background = $("#lightbox_background");
+ //   $(lightbox).css({top : pos.top, left : pos.left});
+ //   $(lightbox).css({top : $(this).scrollTop(), left : $(this).scrollLeft() });
+    $(lightbox).css({top : pos_top, left : pos_left});
+    $(lightbox).css('display', 'block');
+    $(lightbox).css('width', width);
+    $(lightbox).css('height', height);
+    $(lightbox_background).css('display', 'block');
+    
+    // lightboxの独自属性に元々のサイズ、ポジションを記録しておく
+    $(lightbox).attr('origin_top', pos_top);
+    $(lightbox).attr('origin_left', pos_left);
+    $(lightbox).attr('origin_width', width);
+    $(lightbox).attr('origin_height', height);
+
+    // アニメーション
+    var moveto = new Object();
+    moveto.width = '800px';
+    moveto.height = '800px';
+    moveto.top = '10%';
+    moveto.left= '20%';
+    moveto.opacity = 1;
+
+    // open animation callback
+    function lightboxopened(){
+      //console.log('open!');
+    
+    
+    };
+
+    $(lightbox).animate(moveto, 400, 'swing', lightboxopened);
+
+    // lightbox背景のアニメーション
+    var background_moveto = new Object();
+    background_moveto.opacity = 0.5;
+    $(lightbox_background).animate(background_moveto, 400, 'swing');
+  };
+
+
+  // lightbox閉じる処理
+  $('#lightbox_background').click(function() {
+
+
+    // スクロールOK
+    endScrollBlock();
+
+
+
+
+    var lightbox = $("#lightbox");
+    var lightbox_background = $("#lightbox_background");
+ 
+    // アニメーション
+    var moveto = new Object();
+    moveto.width = $(lightbox).attr('origin_width');
+    moveto.height = $(lightbox).attr('origin_height');
+    moveto.top = $(lightbox).attr('origin_top');
+    moveto.left= $(lightbox).attr('origin_left');
+    moveto.opacity = 0;
+
+    // open animation callback
+    function lightboxclosed(){
+      // lightboxのスタイルをもとに戻しておく
+      //$(lightbox).css('width', '100px');
+      //$(lightbox).css('height', '100px');
+      $(lightbox).css('display', 'none');
+      $(lightbox).css('opacity', 1);
+    };
+
+    $(lightbox).animate(moveto, 400, 'swing', lightboxclosed);
+
+    // バックグラウンドの閉じる処理
+    
+    function lightboxbackgroundclosed(){
+      $(lightbox_background).css('display', 'none');
+    };
+
+    var backgroundmoveto = new Object();
+    backgroundmoveto.opacity = 0;
+    $(lightbox_background).animate(backgroundmoveto, 400, 'swing', lightboxbackgroundclosed);
+
+  });
+
+
+
+});
+
+</script>
+
+
+  </head>
+  <body>
+  <div id="lightbox"></div>
+  <div id="lightbox_background"></div>
+
+
+
+    <div>
+      
+      
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      <div class="content2"></div>
+      
+    </div>
+  </body>
+</html>
+
